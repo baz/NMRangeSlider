@@ -67,6 +67,12 @@
     _upperValue = 1.0;
 }
 
+- (CGSize)sizeThatFits:(CGSize)size
+{
+	// Extra vertical height to make the handles easier to grip
+	return CGSizeMake(size.width, self.lowerHandleImageNormal.size.height * 2);
+}
+
 // ------------------------------------------------------------------------------------------------------
 
 #pragma mark -
@@ -168,76 +174,6 @@
     [self setLowerValue:NAN upperValue:upperValue animated:animated];
 }
 
-//ON-Demand images. If the images are not set, then the default values are loaded.
-
-- (UIImage *)trackBackgroundImage
-{
-    if(_trackBackgroundImage==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-trackBackground"];
-        image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(0.0, 5.0, 0.0, 5.0)];
-        _trackBackgroundImage = image;
-    }
-    
-    return _trackBackgroundImage;
-}
-
-- (UIImage *)trackImage
-{
-    if(_trackImage==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-track"];
-        image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(0.0, 7.0, 0.0, 7.0)];
-        _trackImage = image;
-    }
-    
-    return _trackImage;
-}
-
-- (UIImage *)lowerHandleImageNormal
-{
-    if(_lowerHandleImageNormal==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-handle"];
-        _lowerHandleImageNormal = image;
-    }
-    
-    return _lowerHandleImageNormal;
-}
-
-- (UIImage *)lowerHandleImageHighlighted
-{
-    if(_lowerHandleImageHighlighted==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-handle-highlighted"];
-        _lowerHandleImageHighlighted = image;
-    }
-    
-    return _lowerHandleImageHighlighted;
-}
-
-- (UIImage *)upperHandleImageNormal
-{
-    if(_upperHandleImageNormal==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-handle"];
-        _upperHandleImageNormal = image;
-    }
-    
-    return _upperHandleImageNormal;
-}
-
-- (UIImage *)upperHandleImageHighlighted
-{
-    if(_upperHandleImageHighlighted==nil)
-    {
-        UIImage* image = [UIImage imageNamed:@"slider-default-handle-highlighted"];
-        _upperHandleImageHighlighted = image;
-    }
-    
-    return _upperHandleImageHighlighted;
-}
-
 // ------------------------------------------------------------------------------------------------------
 
 #pragma mark -
@@ -277,10 +213,7 @@
     
     retValue.size = CGSizeMake(_trackImage.size.width, _trackImage.size.height);
     
-    if(_trackImage.capInsets.top || _trackImage.capInsets.bottom)
-    {
-        retValue.size.height=self.bounds.size.height;
-    }
+    retValue.size.height = _trackImage.size.height;
 
     float xLowerValue = ((self.bounds.size.width - _lowerHandle.frame.size.width) * (_lowerValue - _minimumValue) / (_maximumValue - _minimumValue))+(_lowerHandle.frame.size.width/2.0f);
     float xUpperValue = ((self.bounds.size.width - _upperHandle.frame.size.width) * (_upperValue - _minimumValue) / (_maximumValue - _minimumValue))+(_upperHandle.frame.size.width/2.0f);
@@ -298,15 +231,9 @@
     
     trackBackgroundRect.size = CGSizeMake(_trackBackgroundImage.size.width-4, _trackBackgroundImage.size.height);
     
-    if(_trackBackgroundImage.capInsets.top || _trackBackgroundImage.capInsets.bottom)
-    {
-        trackBackgroundRect.size.height=self.bounds.size.height;
-    }
+    trackBackgroundRect.size.height = _trackBackgroundImage.size.height;
     
-    if(_trackBackgroundImage.capInsets.left || _trackBackgroundImage.capInsets.right)
-    {
-        trackBackgroundRect.size.width=self.bounds.size.width-4;
-    }
+    trackBackgroundRect.size.width = self.bounds.size.width-4;
     
     trackBackgroundRect.origin = CGPointMake(2, (self.bounds.size.height/2.0f) - (trackBackgroundRect.size.height/2.0f));
     
@@ -317,20 +244,15 @@
 - (CGRect)thumbRectForValue:(float)value image:(UIImage*) thumbImage
 {
     CGRect thumbRect;
-    UIEdgeInsets insets = thumbImage.capInsets;
 
     thumbRect.size = CGSizeMake(thumbImage.size.width, thumbImage.size.height);
     
-    if(insets.top || insets.bottom)
-    {
-        thumbRect.size.height=self.bounds.size.height;
-    }
+    thumbRect.size.height = thumbImage.size.height;
     
     float xValue = ((self.bounds.size.width-thumbRect.size.width)*((value - _minimumValue) / (_maximumValue - _minimumValue)));
     thumbRect.origin = CGPointMake(xValue, (self.bounds.size.height/2.0f) - (thumbRect.size.height/2.0f));
     
-    return thumbRect;
-
+    return CGRectIntegral(thumbRect);
 }
 
 // ------------------------------------------------------------------------------------------------------
@@ -393,16 +315,17 @@
 // TODO: Do it the correct way. I think wwdc 2012 had a video on it...
 - (CGRect) touchRectForHandle:(UIImageView*) handleImageView
 {
-    float xPadding = 10;
-    float yPadding = 10; //(self.bounds.size.height-touchRect.size.height)/2.0f
+    float xPadding = handleImageView.frame.size.height;
+    float yPadding = handleImageView.frame.size.height;
     
     CGRect touchRect = handleImageView.frame;
     touchRect.origin.x -= xPadding/2.0;
     touchRect.origin.y -= yPadding/2.0;
-    touchRect.size.height += xPadding;
-    touchRect.size.width += yPadding;
+    touchRect.size.height += yPadding;
+    touchRect.size.width += xPadding;
     return touchRect;
 }
+
 
 -(BOOL) beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
 {
